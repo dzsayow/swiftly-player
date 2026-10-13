@@ -2176,6 +2176,43 @@ public final class Kern: @unchecked Sendable {
     /// nur noch, was ein Zuschauer wissen will. Kopf, Grund, Bild, Ton, Untertitel und Datei sind
     /// Kernzeilen (`kern`), die immer stehen; die Bildrate steht nur im Messmodus. `schluessel` ist der
     /// leise Name vor dem Wert (Kotlin uebersetzt ihn).
+    /// **Technische Angaben zu einem Titel, ohne ihn zu oeffnen** — fuer die Detailseiten am Fernseher
+    /// (Einstellung `technikAnzeigen`). `Items/{id}` bringt die Quellen mit, ein `PlaybackInfo` ist dafuer
+    /// nicht noetig. Dieselben Teile wie das Technikschild (``technikFest(messen:)``), nur aus der Datei.
+    /// Antwort: `[{schluessel, text}]`, leer ohne Datei oder Server.
+    public func technikangaben(id: String) async -> String {
+        guard let c = client, let item = try? await c.item(id: id), let q = item.mediaSources?.first else { return "[]" }
+        func teile(_ werte: [String?]) -> String? {
+            let da = werte.compactMap { $0 }
+            return da.isEmpty ? nil : da.joined(separator: " · ")
+        }
+        var zeilen: [Technikangabe] = []
+        let video = Dateiangaben.videospur(q)
+        if let bild = teile([Technikangaben.codecname(video?.codec),
+                             Technikangaben.bildzeile(breite: video?.width, hoehe: video?.height, tiefe: nil, umfang: nil),
+                             Technikangaben.dynamik(video),
+                             Technikangaben.bildrate(video?.bildrate).map { "\($0) fps" }]) {
+            zeilen.append(Technikangabe(schluessel: "Bild", text: bild))
+        }
+        let toene = Dateiangaben.tonspuren(q)
+        for (i, ton) in toene.prefix(3).enumerated() {
+            if let t = teile([Technikangaben.codecname(ton.codec), Technikangaben.kanalwort(ton.channels), Technikangaben.sprache(ton.language)]) {
+                zeilen.append(Technikangabe(schluessel: i == 0 ? "Ton" : "", text: t))
+            }
+        }
+        if toene.count > 3 { zeilen.append(Technikangabe(schluessel: "", text: "+ \(toene.count - 3)")) }
+        let untertitel = Dateiangaben.untertitelspuren(q)
+        if !untertitel.isEmpty { zeilen.append(Technikangabe(schluessel: "Untertitel", text: Dateiangaben.untertitel(untertitel))) }
+        if var datei = Dateiangaben.container(q) {
+            if let groesse = q.size, groesse > 0, let dauer = item.runtimeSeconds, dauer > 1,
+               let rate = Technikangaben.bitrate(Double(groesse) * 8 / dauer) {
+                datei += " · Ø \(rate)"
+            }
+            zeilen.append(Technikangabe(schluessel: "Datei", text: datei))
+        }
+        return Self.kodiert(zeilen)
+    }
+
     public func technikFest(messen: Bool) -> String {
         sperre.lock(); let w = _wiedergabe; _zaehlwerk = nil; sperre.unlock()
         guard let w else { return "[]" }
@@ -3689,6 +3726,7 @@ struct Spielplanantwort: Encodable {
     /// ohne DV oder bei Umwandlung. Kotlin spielt solche Dateien mit Media3, libVLC 3 zeigt nur die Basisschicht.
     var dolbyVision: Int? = nil
 }
+struct Technikangabe: Encodable { let schluessel, text: String }
 struct Folgenkartenantwort: Encodable { let id, name, kuerzel: String; let bild: String? }
 struct Kontowechselantwort: Encodable {
     let tausch, landung, ringEnde, wechsel, wachsen, zielgroesse: Double

@@ -437,6 +437,9 @@ fun TvDetail(app: SwiftlyAnwendung, ziel: Ziel, oeffnen: (Ziel) -> Unit) {
                         TvKnopf(null, Zeichen.Mehr, beschreibung = uebersetzt("Mehr")) {}
                     }
                 }
+                // Technische Angaben unter dem Kopf, nur mit der Einstellung (`technikAnzeigen`).
+                if (app.einstellungen.technikAnzeigen) TvTechnikangaben(app, ziel.id,
+                    Modifier.padding(start = TvStil.randSeite, top = 16.dp).tvEingeblendet(einblendAlpha))
                 // Ueber „Aehnliche Filme": die Sammlung ist die naehere Verwandtschaft. Nur bei
                 // Titeln, die in einer stehen (`Sammlungsreihe` in `Titelreihen.swift`).
                 if (gestoert && titel == null) TvStoerung(app, erneut = { gestoert = false; lauf.launch { laden() } })

@@ -1580,12 +1580,16 @@ class Spielwerk(
     /** Nur zaehlen, solange jemand hinsieht — derselbe Takt wie `Wiedergabetakt`, aus demselben Grund. */
     suspend fun technikschildTakt(aktiv: Boolean) {
         if (!aktiv || plan == null) { technikLive = null; return }
-        technikFest = JSONArray(app.kern.technikFest(app.einstellungen.technikschildMessen)).let { a ->
+        val basis = JSONArray(app.kern.technikFest(app.einstellungen.technikschildMessen)).let { a ->
             (0 until a.length()).map { a.getJSONObject(it).let { o ->
                 Technikzeile(o.feldText("schluessel")?.let { k -> uebersetzt(k) }, o.getString("text"), o.getString("art"), o.optBoolean("kopf"))
             } }
         }
+        // **Welcher Player gerade spielt** (`Abspieler`) — im Takt nachgezogen: scheitert ExoPlayer, uebernimmt VLC.
+        fun spielerzeile() = Technikzeile(uebersetzt("Player"), if (spieler.mitMedia3) "ExoPlayer" else "VLC", "", false)
+        technikFest = basis + spielerzeile()
         while (true) {
+            if (technikFest.lastOrNull() != spielerzeile()) technikFest = basis + spielerzeile()
             // VLC zaehlt in `int` — ueber 2 GB laeuft das ueber; `Abspieler.zaehler` liest vorzeichenlos.
             val werte = spieler.zaehler()
             if (werte != null) {

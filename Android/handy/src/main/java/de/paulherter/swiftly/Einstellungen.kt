@@ -186,6 +186,8 @@ class Einstellungen(ablage: Ablage) {
      * Wirkt ab dem naechsten Oeffnen. Scheitert ExoPlayer vor dem ersten Bild, springt VLC ein.
      */
     var abspielwerk by Merkwert(a, "abspielwerk", a.merkwert("abspielwerk") ?: "dolbyVision") { it }
+    /** Technische Angaben (Bild, HDR/DV, Ton, Datei) auf den Detailseiten am Fernseher (`TvTechnikangaben`). Vorgabe aus. */
+    var technikAnzeigen by Merkwert(a, "technikAnzeigen", bool("technikAnzeigen", false), jaNein)
     var zurueckSekunden by Merkwert(a, "zurueckSek", zahl("zurueckSek", 10)) { it.toString() }
     var vorSekunden by Merkwert(a, "vorSek", zahl("vorSek", 30)) { it.toString() }
     /** Aus, bis ihn jemand sucht — er aendert nichts an der Wiedergabe, er zeigt nur, was sie tut. */

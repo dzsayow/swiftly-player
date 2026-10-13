@@ -191,6 +191,8 @@ fun TvProfil(app: SwiftlyAnwendung, oeffnen: (Ziel) -> Unit) {
                                 blatt(uebersetzt("Player"), abspielwerke, e.abspielwerk) { e.abspielwerk = it }
                             }
                             Trennlinie()
+                            TvSchalterzeile(uebersetzt("Technische Infos auf Detailseiten"), e.technikAnzeigen) { e.technikAnzeigen = !e.technikAnzeigen }
+                            Trennlinie()
                             TvSchalterzeile(uebersetzt("Mehrkanal-Ton (5.1)"), e.mehrkanalTon) { e.mehrkanalTon = !e.mehrkanalTon }
                             Trennlinie()
                             TvSchalterzeile(uebersetzt("Untertitel automatisch"), e.untertitelAutomatisch) { e.untertitelAutomatisch = !e.untertitelAutomatisch }

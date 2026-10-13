@@ -20,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.unit.dp
 import de.paulherter.swiftly.*
 import de.paulherter.swiftly.gemeinsam.Stil
@@ -58,6 +59,8 @@ fun TvSerie(app: SwiftlyAnwendung, ziel: Ziel, oeffnen: (Ziel) -> Unit) {
     var gestoert by remember(ziel.id) { mutableStateOf(false) }
     var aehnliche by remember(ziel.id) { mutableStateOf<List<Rasterkachel>>(emptyList()) }
     var extras by remember(ziel.id) { mutableStateOf<List<Extra>>(emptyList()) }
+    /** Die Folge mit dem Fokus — ihre technischen Angaben stehen unter dem Streifen (`technikAnzeigen`). */
+    var fokusFolge by remember(ziel.id) { mutableStateOf<String?>(null) }
 
     // **Der Plan kommt nach, wie auf dem Telefon** (`SerienSeite.planLaden`) — `Kern.serie` liefert
     // ihn nicht mit, weil `PlaybackInfo` bei einer frisch vermessenen Datei Sekunden braucht und
@@ -295,10 +298,15 @@ fun TvSerie(app: SwiftlyAnwendung, ziel: Ziel, oeffnen: (Ziel) -> Unit) {
                                             f.bild, true, f.unterzeile,
                                             nachher = { serie?.id?.let { sid -> staffel?.let { st -> lauf.launch { folgenLaden(sid, st) } } } }))
                                     } }
-                                    TvFolgenkachel(f, lange = lange) { app.spiel.value = Abspielwunsch(f.id, f.ab) }
+                                    TvFolgenkachel(f, Modifier.onFocusChanged { if (it.isFocused) fokusFolge = f.id }, lange = lange) { app.spiel.value = Abspielwunsch(f.id, f.ab) }
                                 }
                             }
                         }
+                    }
+                    // Die Folge mit dem Fokus, sonst die, bei der man steht.
+                    if (app.einstellungen.technikAnzeigen && folgen.isNotEmpty()) {
+                        val id = fokusFolge?.takeIf { fid -> folgen.any { it.id == fid } } ?: serie?.stand?.id?.takeIf { sid -> folgen.any { it.id == sid } } ?: folgen.first().id
+                        TvTechnikangaben(app, id, Modifier.padding(start = TvStil.randSeite, top = 4.dp), warten = true)
                     }
                 }
                 val leute = serie?.darsteller.orEmpty()
